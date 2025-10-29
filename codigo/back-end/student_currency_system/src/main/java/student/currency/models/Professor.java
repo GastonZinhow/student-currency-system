@@ -33,4 +33,7 @@ public class Professor {
 
   @Column(nullable = false)
   private String role = "PROFESSOR";
+
+  @Column(nullable = false)
+  private String name;
 }
