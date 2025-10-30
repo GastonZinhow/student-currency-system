@@ -12,29 +12,35 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+ const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
 
-    try {
-      const user = await authService.login(login, password);
+  try {
+    const user = await authService.login(login, password);
 
-      if (user.role === "STUDENT") {
-        router.push("/Aluno/Dashboard");
-      } else if (user.role === "PROFESSOR") {
-        router.push("/Professor/Dashboard");
-      } else if (user.role === "COMPANY") {
-        router.push("/EmpresaParceira/Dashboard");
-      } else {
-        router.push("/dashboard");
-      }
-    } catch {
+    if (!user) {
       setError("Login ou senha incorretos.");
-    } finally {
-      setLoading(false);
+      return;
     }
-  };
+
+    if (user.role === "STUDENT") {
+      router.replace("/Aluno/Dashboard");
+    } else if (user.role === "PROFESSOR") {
+      router.replace("/Professor/Dashboard");
+    } else if (user.role === "COMPANY") {
+      router.replace("/EmpresaParceira/Dashboard");
+    } else {
+      router.replace("/dashboard");
+    }
+  } catch {
+    setError("Login ou senha incorretos.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="flex h-screen items-center justify-center bg-neutral-900 text-white">

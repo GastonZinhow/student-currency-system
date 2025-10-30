@@ -1,22 +1,41 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "@/components/motionVariants";
 import { X } from "lucide-react";
 import Link from "next/link";
 
-const mockStudents = [
-  { id: 1, name: "Ana Souza", balance: 120 },
-  { id: 2, name: "Carlos Pereira", balance: 80 },
-  { id: 3, name: "João Mendes", balance: 50 },
-];
-
 const SendCoins = () => {
+  const [students, setStudents] = useState<any[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [amount, setAmount] = useState<number>(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [professor, setProfessor] = useState<any>(null);
+
+  // 🟢 Buscar dados do professor logado
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+    if (user?.login) {
+      fetch("http://localhost:8080/professors")
+        .then((res) => res.json())
+        .then((data) => {
+          const prof = data.find((p: any) => p.login === user.login);
+          if (prof) setProfessor(prof);
+        })
+        .catch((err) => console.error("Erro ao buscar professor:", err));
+    }
+  }, []);
+
+  // 🟢 Buscar alunos ao carregar a página
+  useEffect(() => {
+    fetch("http://localhost:8080/students")
+      .then((res) => res.json())
+      .then((data) => setStudents(data))
+      .catch((err) => console.error("Erro ao carregar alunos:", err));
+  }, []);
 
   const openModal = (student: any) => {
     setSelectedStudent(student);
@@ -24,15 +43,47 @@ const SendCoins = () => {
     setModalOpen(true);
   };
 
-  const sendCoins = () => {
+  // 🟢 Enviar moedas (usa professorId dinâmico)
+  const sendCoins = async () => {
+    if (!selectedStudent || !professor) {
+      alert("❌ Professor não identificado. Faça login novamente.");
+      return;
+    }
+
     setLoading(true);
 
-    // ATUALIZAR QUANDO BACK ESTIVER ON 
-    setTimeout(() => {
+    try {
+      const response = await fetch("http://localhost:8080/transactions/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          professorId: professor.id,
+          studentId: selectedStudent.id,
+          amount,
+          reason: "Recompensa de participação",
+        }),
+      });
+
+      if (response.ok) {
+        alert(`✅ Você enviou ${amount} moedas para ${selectedStudent.name}`);
+        setModalOpen(false);
+        setAmount(0);
+
+        // Atualiza saldos localmente
+        setStudents((prev) =>
+          prev.map((s) =>
+            s.id === selectedStudent.id
+              ? { ...s, coins: (s.coins || 0) + amount }
+              : s
+          )
+        );
+      } 
+    } catch (error) {
+      console.error(error);
+      alert("❌ Erro na conexão com o servidor");
+    } finally {
       setLoading(false);
-      setModalOpen(false);
-      alert(`✅ Você enviou ${amount} moedas para ${selectedStudent.name}`);
-    }, 700);
+    }
   };
 
   return (
@@ -51,29 +102,44 @@ const SendCoins = () => {
         </button>
       </Link>
 
+      {professor ? (
+        <p className="text-gray-700">
+          Professor logado: <strong>{professor.name}</strong> (
+          {professor.login})
+        </p>
+      ) : (
+        <p className="text-red-500">Carregando informações do professor...</p>
+      )}
+
       <motion.div
         variants={fadeUp}
         className="bg-white shadow-lg rounded-xl p-5 divide-y"
       >
-        {mockStudents.map((student) => (
-          <div
-            key={student.id}
-            className="flex items-center justify-between py-4"
-          >
-            <div>
-              <div className="font-semibold text-lg">{student.name}</div>
-              <div className="text-sm text-gray-500">
-                Saldo atual do aluno: {student.balance} moedas
-              </div>
-            </div>
-            <button
-              onClick={() => openModal(student)}
-              className="px-4 py-2 rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition"
+        {students.length > 0 ? (
+          students.map((student) => (
+            <div
+              key={student.id}
+              className="flex items-center justify-between py-4"
             >
-              Enviar moedas
-            </button>
-          </div>
-        ))}
+              <div>
+                <div className="font-semibold text-lg">{student.name}</div>
+                <div className="text-sm text-gray-500">
+                  Saldo atual do aluno: {student.coins ?? 0} moedas
+                </div>
+              </div>
+              <button
+                onClick={() => openModal(student)}
+                className="px-4 py-2 rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition"
+              >
+                Enviar moedas
+              </button>
+            </div>
+          ))
+        ) : (
+          <p className="text-center text-gray-500 py-6">
+            Nenhum aluno encontrado.
+          </p>
+        )}
       </motion.div>
 
       {modalOpen && (

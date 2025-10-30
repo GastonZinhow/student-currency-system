@@ -3,27 +3,39 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { fadeUp, staggerContainer } from "../../../components/motionVariants";
+import { fadeUp, staggerContainer } from "@/components/motionVariants";
 import CommonCard from "../../../components/commonCard";
-import { student as studentMock } from "../../../utils/mockData";
 import { Coins, List, Bell, Gift, PiggyBank, LogOut } from "lucide-react";
 import { format } from "date-fns";
 import { authService } from "@/services/authService";
 import { useRouter } from "next/navigation";
 
+// Simulação de transações e notificações
+const mockTransactions = [
+  { id: 1, description: "Recebido do Prof. Carlos", amount: 20, date: "2025-10-10T14:00", type: "GAIN" },
+  { id: 2, description: "Troca por Caneca", amount: 15, date: "2025-10-12T09:45", type: "SPEND" },
+  { id: 3, description: "Ganho participação em aula", amount: 10, date: "2025-10-13T17:15", type: "GAIN" },
+];
+
+const mockNotifications = [
+  { id: 1, message: "Você recebeu 20 moedas do Prof. Carlos!", date: "2025-10-10T14:00" },
+  { id: 2, message: "Sua troca por 'Caneca personalizada' foi confirmada.", date: "2025-10-12T09:45" },
+  { id: 3, message: "Você ganhou 10 moedas por participação em aula.", date: "2025-10-13T17:15" },
+];
+
 export default function StudentDashboard() {
-  const [student, setStudent] = useState(() => ({
+  const [student, setStudent] = useState({
     name: "",
     balance: 0,
     summary: { last7DaysGained: 0, exchanges: 0 },
     transactions: [] as any[],
     notifications: [] as any[],
-  }));
+  });
 
   const [loading, setLoading] = useState(true);
   const [showNotifications, setShowNotifications] = useState(false);
-  const user = authService.getUser();
   const router = useRouter();
+  const user = authService.getUser();
 
   const handleLogout = () => {
     authService.logout();
@@ -31,19 +43,22 @@ export default function StudentDashboard() {
   };
 
   useEffect(() => {
-    const t = setTimeout(() => {
+    // Gambiarra: simular carregamento do aluno logado
+    setTimeout(() => {
+      const balance = mockTransactions.reduce((acc, t) => t.type === "GAIN" ? acc + t.amount : acc - t.amount, 0);
+      const last7Days = mockTransactions.filter(t => t.type === "GAIN").reduce((acc, t) => acc + t.amount, 0);
+      const exchanges = mockTransactions.filter(t => t.type === "SPEND").length;
+
       setStudent({
-        ...studentMock,
-        notifications: [
-          { id: 1, message: "Você recebeu 20 moedas do Prof. Carlos!", date: "2025-10-10T14:00" },
-          { id: 2, message: "Sua troca por 'Caneca personalizada' foi confirmada.", date: "2025-10-12T09:45" },
-          { id: 3, message: "Você ganhou 10 moedas por participação em aula.", date: "2025-10-13T17:15" },
-        ],
+        name: user?.login ?? "Aluno",
+        balance,
+        summary: { last7DaysGained: last7Days, exchanges },
+        transactions: mockTransactions,
+        notifications: mockNotifications,
       });
       setLoading(false);
-    }, 450);
-    return () => clearTimeout(t);
-  }, []);
+    }, 300);
+  }, [user]);
 
   return (
     <motion.div
@@ -55,7 +70,7 @@ export default function StudentDashboard() {
       {/* Cabeçalho */}
       <motion.header variants={fadeUp} className="flex items-center justify-between relative">
         <div>
-          <h1 className="text-3xl font-bold">Olá, {loading ? "..." : user.login}</h1>
+          <h1 className="text-3xl font-bold">Olá, {loading ? "..." : student.name}</h1>
           <p className="text-sm text-gray-500">Bem-vindo ao seu painel de moedas</p>
         </div>
 
@@ -63,7 +78,7 @@ export default function StudentDashboard() {
           {/* Notificações */}
           <div className="relative">
             <button
-              onClick={() => setShowNotifications((prev) => !prev)}
+              onClick={() => setShowNotifications(prev => !prev)}
               aria-label="Ver notificações"
               className="relative p-2 rounded-full hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-blue-200"
             >
@@ -84,7 +99,7 @@ export default function StudentDashboard() {
               >
                 <div className="p-3 border-b font-semibold">Notificações</div>
                 <div className="max-h-60 overflow-y-auto divide-y">
-                  {student.notifications.map((n) => (
+                  {student.notifications.map(n => (
                     <div key={n.id} className="p-3 text-sm hover:bg-gray-50">
                       <div>{n.message}</div>
                       <div className="text-xs text-gray-500 mt-1">
@@ -97,19 +112,17 @@ export default function StudentDashboard() {
             )}
           </div>
 
-          {/* --- TROCAR: botão de Trocar Moedas no cabeçalho (com ícone de presente) --- */}
+          {/* Trocar Moedas */}
           <Link href="/Aluno/TrocarMoedas">
-            <button
-              className="px-4 py-2 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition flex items-center gap-2"
-              aria-label="Trocar moedas"
-            >
+            <button className="px-4 py-2 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition flex items-center gap-2">
               <Gift size={16} /> Trocar moedas
             </button>
           </Link>
+
+          {/* Logout */}
           <button
             onClick={handleLogout}
             className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition flex items-center gap-2"
-            aria-label="Sair da conta"
           >
             <LogOut size={16} /> Sair
           </button>
@@ -122,7 +135,7 @@ export default function StudentDashboard() {
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-3">
               <div className="p-4 rounded-xl bg-gray-100">
-                <PiggyBank size={38}  />
+                <PiggyBank size={38} />
               </div>
               <div>
                 <div className="text-4xl font-semibold">{loading ? "..." : student.balance}</div>
@@ -131,10 +144,8 @@ export default function StudentDashboard() {
             </div>
 
             <div className="ml-auto">
-             
               <Link href="/Aluno/ConsultarExtrato">
                 <button className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:scale-[1.02] transition-all flex items-center gap-2">
-                  {/* opcional: manter ícone list/coins; deixei só texto para foco */}
                   Consultar extrato
                 </button>
               </Link>
@@ -147,9 +158,7 @@ export default function StudentDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-sm text-gray-500">Ganho últimos 7 dias</div>
-                <div className="font-semibold">
-                  {loading ? "..." : student.summary.last7DaysGained} moedas
-                </div>
+                <div className="font-semibold">{loading ? "..." : student.summary.last7DaysGained} moedas</div>
               </div>
               <div>
                 <div className="text-sm text-gray-500">Total de trocas</div>
@@ -174,19 +183,13 @@ export default function StudentDashboard() {
 
       {/* Transações recentes */}
       <motion.section variants={fadeUp}>
-        <CommonCard
-          title="Transações recentes"
-          actions={<div className="text-sm text-gray-500">Últimas 8</div>}
-        >
+        <CommonCard title="Transações recentes" actions={<div className="text-sm text-gray-500">Últimas 8</div>}>
           <div className="mt-3 space-y-2">
             {loading ? (
               <div className="text-sm text-gray-500">Carregando...</div>
             ) : (
               student.transactions.slice(0, 6).map((t: any) => (
-                <div
-                  key={t.id}
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition"
-                >
+                <div key={t.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-md bg-gray-100">
                       <List size={18} />
@@ -198,9 +201,7 @@ export default function StudentDashboard() {
                       </div>
                     </div>
                   </div>
-                  <div
-                    className={`font-semibold ${t.type === "GAIN" ? "text-emerald-600" : "text-rose-500"}`}
-                  >
+                  <div className={`font-semibold ${t.type === "GAIN" ? "text-emerald-600" : "text-rose-500"}`}>
                     {t.type === "GAIN" ? `+${t.amount}` : `-${t.amount}`}
                   </div>
                 </div>
