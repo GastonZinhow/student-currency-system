@@ -1,10 +1,12 @@
 package student.currency.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import student.currency.models.Instituition;
+import student.currency.dtos.instituition.InstituitionRequestDTO;
+import student.currency.dtos.instituition.InstituitionResponseDTO;
 import student.currency.services.InstituitionService;
 
 import java.util.List;
@@ -18,36 +20,29 @@ public class InstituitionController {
     private InstituitionService instituitionService;
 
     @GetMapping
-    public List<Instituition> getAllInstituitions() {
-        return instituitionService.findAll();
+    public ResponseEntity<List<InstituitionResponseDTO>> getAllInstituitions() {
+        return ResponseEntity.ok(instituitionService.findAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Instituition> getInstituitionById(@PathVariable Long id) {
-        return instituitionService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<InstituitionResponseDTO> getInstituitionById(@PathVariable Long id) {
+        return ResponseEntity.ok(instituitionService.findById(id));
     }
 
     @PostMapping
-    public Instituition createInstituition(@RequestBody Instituition instituition) {
-        return instituitionService.save(instituition);
+    public ResponseEntity<InstituitionResponseDTO> createInstituition(@RequestBody InstituitionRequestDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(instituitionService.save(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Instituition> updateInstituition(@PathVariable Long id,
-            @RequestBody Instituition instituition) {
-        if (!instituitionService.findById(id).isPresent()) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(instituitionService.update(id, instituition));
+    public ResponseEntity<InstituitionResponseDTO> updateInstituition(
+            @PathVariable Long id,
+            @RequestBody InstituitionRequestDTO dto) {
+        return ResponseEntity.ok(instituitionService.update(id, dto));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteInstituition(@PathVariable Long id) {
-        if (!instituitionService.findById(id).isPresent()) {
-            return ResponseEntity.notFound().build();
-        }
         instituitionService.delete(id);
         return ResponseEntity.noContent().build();
     }

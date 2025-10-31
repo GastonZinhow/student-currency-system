@@ -30,11 +30,17 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/professors").permitAll()
-
                         .requestMatchers(HttpMethod.POST, "/students").permitAll()
-
+                        .requestMatchers(HttpMethod.POST, "/professors").permitAll()
                         .requestMatchers(HttpMethod.POST, "/companies").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/instituitions").permitAll()
+
+                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/login/student").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/login/professor").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/login/company").permitAll()
+
+                        .requestMatchers(HttpMethod.GET, "/instituitions").permitAll()
 
                         .anyRequest().permitAll())
                 .formLogin(form -> form.permitAll());

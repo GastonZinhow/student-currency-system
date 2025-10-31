@@ -2,14 +2,20 @@ package student.currency.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import student.currency.models.Transaction;
+
+import student.currency.dtos.transaction.TransactionResponseDTO;
+import student.currency.exceptions.InsufficientBalanceException;
+import student.currency.exceptions.ResourceNotFoundException;
+import student.currency.mappers.TransactionMapper;
 import student.currency.models.Professor;
 import student.currency.models.Student;
-import student.currency.repositories.TransactionRepository;
+import student.currency.models.Transaction;
 import student.currency.repositories.ProfessorRepository;
 import student.currency.repositories.StudentRepository;
+import student.currency.repositories.TransactionRepository;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class TransactionService {
@@ -26,41 +32,31 @@ public class TransactionService {
     @Autowired
     private EmailService emailService;
 
-    public List<Transaction> getTransactionsByStudent(Long studentId) {
-        return transactionRepository.findByStudentIdOrderByCreatedAtDesc(studentId);
+    @Autowired
+    private TransactionMapper transactionMapper;
+
+    public List<TransactionResponseDTO> getTransactionsByStudent(Long studentId) {
+        return transactionRepository.findByStudentIdOrderByCreatedAtDesc(studentId).stream()
+                .map(transactionMapper::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public List<Transaction> getTransactionsByProfessor(Long professorId) {
-        return transactionRepository.findByProfessorIdOrderByCreatedAtDesc(professorId);
+    public List<TransactionResponseDTO> getTransactionsByProfessor(Long professorId) {
+        return transactionRepository.findByProfessorIdOrderByCreatedAtDesc(professorId).stream()
+                .map(transactionMapper::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public Transaction addTransaction(Long studentId, Transaction transacoes) {
-        Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
-
-        int newBalance = student.getCoins();
-        if ("GAIN".equals(transacoes.getReason())) {
-            newBalance += transacoes.getAmount();
-        } else if ("SPEND".equals(transacoes.getReason())) {
-            if (student.getCoins() < transacoes.getAmount())
-                throw new RuntimeException("Saldo insuficiente");
-            newBalance -= transacoes.getAmount();
-        }
-        student.setCoins(newBalance);
-        studentRepository.save(student);
-
-        transacoes.setStudent(student);
-        return transactionRepository.save(transacoes);
-    }
-
-    public Transaction sendCoins(Long professorId, Long studentId, Integer amount, String reason) {
+    public TransactionResponseDTO sendCoins(Long professorId, Long studentId, Integer amount, String reason) {
         Professor professor = professorRepository.findById(professorId)
-                .orElseThrow(() -> new RuntimeException("Professor not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Professor não encontrado com ID: " + professorId));
+
         Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("Student not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Aluno não encontrado com ID: " + studentId));
 
         if (professor.getCoins() < amount) {
-            throw new RuntimeException("Insufficient coins");
+            throw new InsufficientBalanceException("Saldo insuficiente. Você possui " + professor.getCoins()
+                    + " moedas e está tentando enviar " + amount);
         }
 
         professor.setCoins(professor.getCoins() - amount);
@@ -80,10 +76,11 @@ public class TransactionService {
         emailService.sendEmail(
                 student.getEmail(),
                 "Você recebeu moedas!",
-                "Olá " + student.getName() + ",\n\nVocê recebeu " + amount + " moedas do professor "
-                        + professor.getName() +
-                        " pelo motivo: " + reason + ".\n\nSeu novo saldo é: " + student.getCoins() + " moedas.");
+                "Olá " + student.getName() + ",\n\n" +
+                        "Você recebeu " + amount + " moedas do professor " + professor.getName() + "\n" +
+                        "Motivo: " + reason + "\n\n" +
+                        "Seu novo saldo é: " + student.getCoins() + " moedas.");
 
-        return savedTransaction;
+        return transactionMapper.toResponseDTO(savedTransaction);
     }
 }

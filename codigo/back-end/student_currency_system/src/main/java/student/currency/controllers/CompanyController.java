@@ -1,11 +1,12 @@
 package student.currency.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import student.currency.models.Company;
+import student.currency.dtos.company.CompanyRequestDTO;
+import student.currency.dtos.company.CompanyResponseDTO;
 import student.currency.services.CompanyService;
 
 import java.util.List;
@@ -18,40 +19,30 @@ public class CompanyController {
     @Autowired
     private CompanyService companyService;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
     @GetMapping
-    public List<Company> getAllCompanies() {
-        return companyService.findAll();
+    public ResponseEntity<List<CompanyResponseDTO>> getAllCompanies() {
+        return ResponseEntity.ok(companyService.findAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Company> getCompanyById(@PathVariable Long id) {
-        return companyService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<CompanyResponseDTO> getCompanyById(@PathVariable Long id) {
+        return ResponseEntity.ok(companyService.findById(id));
     }
 
     @PostMapping
-    public Company createCompany(@RequestBody Company company) {
-        company.setPassword(passwordEncoder.encode(company.getPassword()));
-        return companyService.save(company);
+    public ResponseEntity<CompanyResponseDTO> createCompany(@RequestBody CompanyRequestDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(companyService.save(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Company> updateCompany(@PathVariable Long id, @RequestBody Company company) {
-        if (!companyService.findById(id).isPresent()) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(companyService.update(id, company));
+    public ResponseEntity<CompanyResponseDTO> updateCompany(
+            @PathVariable Long id,
+            @RequestBody CompanyRequestDTO dto) {
+        return ResponseEntity.ok(companyService.update(id, dto));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCompany(@PathVariable Long id) {
-        if (!companyService.findById(id).isPresent()) {
-            return ResponseEntity.notFound().build();
-        }
         companyService.delete(id);
         return ResponseEntity.noContent().build();
     }
