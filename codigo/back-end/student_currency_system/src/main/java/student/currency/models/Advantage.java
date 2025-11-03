@@ -13,6 +13,9 @@ public class Advantage {
   private Long id;
 
   @Column(nullable = false)
+  private String name;
+
+  @Column(nullable = false)
   private String description;
 
   @Column(nullable = false)
@@ -20,6 +23,12 @@ public class Advantage {
 
   @Column(nullable = false)
   private String picture;
+
+  @Column(nullable = false)
+  private Integer quantity;
+
+  @Column(nullable = false)
+  private Boolean isActive;
 
   @ManyToOne
   @JoinColumn(name = "company_id", nullable = false)
