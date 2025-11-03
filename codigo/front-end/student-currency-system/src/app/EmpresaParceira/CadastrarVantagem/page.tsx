@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -8,34 +8,68 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "@/components/motionVariants";
+import { useRouter } from "next/navigation";
 
 export default function CadastrarVantagem() {
-  const [form, setForm] = useState({
-    nome: "",
-    descricao: "",
-    custo: "",
-    quantidade: "",
-  });
+  const [nome, setNome] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [custo, setCusto] = useState<number | undefined>(undefined);
+  const [quantidade, setQuantidade] = useState<number | undefined>(undefined);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const [selectedCompany, setSelectedCompany] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-  const handleSalvar = () => {
-    console.log("Dados salvos:", form);
-  };
+    if (user?.login) {
+      fetch("http://localhost:8080/companies")
+        .then((res) => res.json())
+        .then((data) => {
+          const comp = data.find((c: any) => c.login === user.login);
+          if (comp) setSelectedCompany(comp);
+        })
+        .catch((err) => console.error("Erro ao buscar professor:", err));
+    }
+  }, []);
 
-  const handleCancelar = () => {
-    setForm({ nome: "", descricao: "", custo: "", quantidade: "" });
+  const handleSalvar = async () => {
+    if (!selectedCompany) {
+      alert("Empresa não identificada. Faça login novamente.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch("http://localhost:8080/advantages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          companyId: selectedCompany.id,
+          name: nome,
+          description: descricao,
+          cost: custo,
+          amount: quantidade,
+          picture: "test"
+        }),
+      });
+
+      if (response.ok) {
+        alert("✅ Vantagem cadastrada com sucesso!");
+      }
+
+    } catch (error) {
+      console.error(error);
+      alert("Erro na conexão com o servidor");
+    } finally {
+      setLoading(false);
+      router.push("/EmpresaParceira/Dashboard");
+    }
   };
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={staggerContainer}
-      className="max-w-xl mx-auto mt-10 p-6 space-y-6"
-    >
+    <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="max-w-xl mx-auto mt-10 p-6 space-y-6">
       <motion.h1 variants={fadeUp} className="text-3xl font-bold text-center">
         Cadastrar Vantagem
       </motion.h1>
@@ -45,27 +79,36 @@ export default function CadastrarVantagem() {
           <CardTitle>Preencha os dados da vantagem</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+
           <div>
-            <Label htmlFor="nome">Nome da vantagem</Label>
-            <Input id="nome" name="nome" value={form.nome} onChange={handleChange} />
+            <Label>Nome da vantagem</Label>
+            <Input value={nome} onChange={(e) => setNome(e.target.value)} />
           </div>
+
           <div>
-            <Label htmlFor="descricao">Descrição</Label>
-            <Textarea id="descricao" name="descricao" value={form.descricao} onChange={handleChange} />
+            <Label>Descrição</Label>
+            <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} />
           </div>
+
           <div>
-            <Label htmlFor="custo">Custo em moedas</Label>
-            <Input id="custo" name="custo" value={form.custo} onChange={handleChange} type="number" />
+            <Label>Custo em moedas</Label>
+            <Input type="number" value={custo} onChange={(e) => setCusto(Number(e.target.value))} />
           </div>
+
           <div>
-            <Label htmlFor="quantidade">Quantidade disponível</Label>
-            <Input id="quantidade" name="quantidade" value={form.quantidade} onChange={handleChange} type="number" />
+            <Label>Quantidade disponível</Label>
+            <Input type="number" value={quantidade} onChange={(e) => setQuantidade(Number(e.target.value))} />
           </div>
 
           <div className="flex justify-end gap-3 mt-4">
-            <Button variant="outline" onClick={handleCancelar}>Cancelar</Button>
-            <Button onClick={handleSalvar}>Salvar</Button>
+            <Button variant="outline" onClick={() => router.push("/EmpresaParceira/Dashboard")}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSalvar} disabled={loading}>
+              {loading ? "Salvando..." : "Salvar"}
+            </Button>
           </div>
+
         </CardContent>
       </Card>
     </motion.div>
