@@ -18,9 +18,12 @@ public class AdvantageMapper {
 
     public Advantage toEntity(AdvantageRequestDTO dto, Company company) {
         Advantage advantage = new Advantage();
+        advantage.setName(dto.getName());
         advantage.setDescription(dto.getDescription());
         advantage.setCost(dto.getCost());
         advantage.setPicture(dto.getPicture());
+        advantage.setQuantity(dto.getQuantity());
+        advantage.setIsActive(dto.getIsActive());
         advantage.setCompany(company);
         return advantage;
     }
@@ -28,9 +31,12 @@ public class AdvantageMapper {
     public AdvantageResponseDTO toResponseDTO(Advantage advantage) {
         AdvantageResponseDTO dto = new AdvantageResponseDTO();
         dto.setId(advantage.getId());
+        dto.setName(advantage.getName());
         dto.setDescription(advantage.getDescription());
         dto.setCost(advantage.getCost());
         dto.setPicture(advantage.getPicture());
+        dto.setQuantity(advantage.getQuantity());
+        dto.setIsActive(advantage.getIsActive());
         if (advantage.getCompany() != null) {
             dto.setCompany(companyMapper.toResponseDTO(advantage.getCompany()));
         }
@@ -38,9 +44,12 @@ public class AdvantageMapper {
     }
 
     public void updateEntity(AdvantageRequestDTO dto, Advantage advantage, Company company) {
+        advantage.setName(dto.getName());
         advantage.setDescription(dto.getDescription());
         advantage.setCost(dto.getCost());
         advantage.setPicture(dto.getPicture());
+        advantage.setQuantity(dto.getQuantity());
+        advantage.setIsActive(dto.getIsActive());
         advantage.setCompany(company);
     }
 }
