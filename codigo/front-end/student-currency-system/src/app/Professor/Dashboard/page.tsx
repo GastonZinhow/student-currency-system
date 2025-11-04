@@ -190,7 +190,6 @@ export default function ProfessorDashboard() {
           </button>
         </div>
       </motion.header>
-
       {/* Cards */}
       <motion.section variants={fadeUp} className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <CommonCard title="Saldo Disponível" subtitle="Moedas para enviar aos alunos">

@@ -13,8 +13,10 @@ import { useRouter } from "next/navigation";
 
 export default function PartnerDashboard() {
   const [partner, setPartner] = useState<any>(null);
+  const [advantages, setAdvantages] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<any>(null);
   const user = authService.getUser();
   const router = useRouter();
   
@@ -22,6 +24,42 @@ export default function PartnerDashboard() {
       authService.logout();
       router.push("/auth/login");
     };
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+    if (user?.login) {
+      fetch("http://localhost:8080/companies")
+        .then((res) => res.json())
+        .then((data) => {
+          const comp = data.find((c: any) => c.login === user.login);
+          if (comp) setSelectedCompany(comp);
+        })
+        .catch((err) => console.error("Erro ao buscar empresa:", err));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!selectedCompany?.id) return;
+
+    fetch(`http://localhost:8080/advantages/company/${selectedCompany.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setAdvantages({
+          name: selectedCompany.name,
+          rewards: data.map((adv: any) => ({
+            id: adv.id,
+            name: adv.name,
+            description: adv.description,
+            quantity: adv.quantity,
+            date: new Date(),
+            active: adv.isActive,
+          })),
+        });
+        setLoading(false);
+      })
+      .catch((err) => console.error("Erro ao carregar vantagens:", err));
+  }, [selectedCompany]);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -115,7 +153,7 @@ export default function PartnerDashboard() {
               <div className="p-4 rounded-xl bg-gray-100">
                 <Gift size={38} />
               </div>
-              <div className="text-4xl font-semibold">{loading ? "..." : partner?.rewardsCount}</div>
+              <div className="text-4xl font-semibold">{loading ? "..." : advantages.rewards.length}</div>
             </div>
 
             <div className="ml-auto">
@@ -157,7 +195,7 @@ export default function PartnerDashboard() {
             {loading ? (
               <div className="text-sm text-gray-500">Carregando...</div>
             ) : (
-              partner.exchangesRecent.map((e: any) => (
+              partner?.exchangesRecent.map((e: any) => (
                 <div key={e.id} className="py-3 flex items-center justify-between">
                   <div>
                     <div className="font-medium">

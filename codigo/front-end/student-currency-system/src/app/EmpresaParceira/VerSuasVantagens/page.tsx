@@ -5,11 +5,14 @@ import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "../../../components/motionVariants";
 import CommonCard from "../../../components/commonCard";
 import { format } from "date-fns";
+import { useRouter } from "next/navigation";
 
 export default function VerSuasVantagens() {
   const [partner, setPartner] = useState<any>({ name: "", rewards: [] });
   const [loading, setLoading] = useState(true);
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
+  const router = useRouter();
+
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -99,7 +102,14 @@ export default function VerSuasVantagens() {
         </h1>
         <p className="text-sm text-gray-500">Vantagens cadastradas</p>
       </motion.header>
-
+      <motion.div variants={fadeUp}>
+        <button
+          onClick={() => router.push("/EmpresaParceira/Dashboard")}
+          className="px-4 py-2 mb-4 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition"
+        >
+          ← Voltar ao Início
+        </button>
+      </motion.div>
       <motion.section variants={fadeUp}>
         <CommonCard
           title="Minhas Vantagens"
