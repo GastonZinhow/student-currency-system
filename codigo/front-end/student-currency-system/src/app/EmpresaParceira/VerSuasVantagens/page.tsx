@@ -6,59 +6,85 @@ import { fadeUp, staggerContainer } from "../../../components/motionVariants";
 import CommonCard from "../../../components/commonCard";
 import { format } from "date-fns";
 
-// Mock de exemplo
-const partnerMock = {
-  id: 1,
-  name: "Empresa Exemplo",
-  rewards: [
-    {
-      id: 1,
-      name: "Caneca Personalizada",
-      description: "Caneca com logo da empresa",
-      quantity: 50,
-      date: "2025-10-01T10:00:00",
-      active: true,
-    },
-    {
-      id: 2,
-      name: "Camiseta Exclusiva",
-      description: "Camiseta com estampa especial",
-      quantity: 30,
-      date: "2025-10-05T14:30:00",
-      active: false,
-    },
-    {
-      id: 3,
-      name: "Caderno Premium",
-      description: "Caderno de alta qualidade",
-      quantity: 20,
-      date: "2025-10-10T09:15:00",
-      active: true,
-    },
-  ],
-};
-
 export default function VerSuasVantagens() {
-  const [partner, setPartner] = useState<any>({ rewards: [] });
+  const [partner, setPartner] = useState<any>({ name: "", rewards: [] });
   const [loading, setLoading] = useState(true);
+  const [selectedCompany, setSelectedCompany] = useState<any>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      setPartner(partnerMock);
-      setLoading(false);
-    }, 400);
-    return () => clearTimeout(t);
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+    if (user?.login) {
+      fetch("http://localhost:8080/companies")
+        .then((res) => res.json())
+        .then((data) => {
+          const comp = data.find((c: any) => c.login === user.login);
+          if (comp) setSelectedCompany(comp);
+        })
+        .catch((err) => console.error("Erro ao buscar empresa:", err));
+    }
   }, []);
 
-  // Alterna o estado ativo/inativo
-  const toggleRewardStatus = (id: number) => {
-    setPartner((prev: any) => ({
-      ...prev,
-      rewards: prev.rewards.map((r: any) =>
-        r.id === id ? { ...r, active: !r.active } : r
-      ),
-    }));
+  useEffect(() => {
+    if (!selectedCompany?.id) return;
+
+    fetch(`http://localhost:8080/advantages/company/${selectedCompany.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setPartner({
+          name: selectedCompany.name,
+          rewards: data.map((adv: any) => ({
+            id: adv.id,
+            name: adv.name,
+            description: adv.description,
+            quantity: adv.quantity,
+            date: new Date(),
+            active: adv.isActive,
+          })),
+        });
+        setLoading(false);
+      })
+      .catch((err) => console.error("Erro ao carregar vantagens:", err));
+  }, [selectedCompany]);
+
+  const toggleRewardStatus = async (id: number) => {
+    const reward = partner.rewards.find((r: any) => r.id === id);
+    if (!reward) return;
+
+    const updatedAdvantage = {
+      name: reward.name,
+      description: reward.description,
+      cost: reward.cost ?? 0,
+      picture: reward.picture ?? "",
+      quantity: reward.quantity,
+      isActive: !reward.active,
+      companyId: selectedCompany?.id,
+    };
+
+    try {
+      const res = await fetch(`http://localhost:8080/advantages/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedAdvantage),
+      });
+
+      if (!res.ok) {
+        throw new Error("Erro ao atualizar status");
+      }
+
+      setPartner((prev: any) => ({
+        ...prev,
+        rewards: prev.rewards.map((r: any) =>
+          r.id === id ? { ...r, active: !r.active } : r
+        ),
+      }));
+    } catch (err) {
+      console.error(err);
+    }
   };
+
 
   return (
     <motion.div
@@ -110,17 +136,11 @@ export default function VerSuasVantagens() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {partner.rewards.map((r: any) => (
                     <tr key={r.id} className="hover:bg-gray-50 transition">
-                      <td className="px-6 py-4 text-sm text-gray-700">
-                        {r.name}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-700">
-                        {r.description}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-700">
-                        {r.quantity}
-                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">{r.name}</td>
+                      <td className="px-6 py-4 text-sm text-gray-700">{r.description}</td>
+                      <td className="px-6 py-4 text-sm text-gray-700">{r.quantity}</td>
                       <td className="px-6 py-4 text-sm text-gray-500">
-                        {format(new Date(r.date), "dd/MM/yyyy")}
+                        {format(new Date(), "dd/MM/yyyy")}
                       </td>
                       <td className="px-6 py-4 text-center">
                         <motion.div

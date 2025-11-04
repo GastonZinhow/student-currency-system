@@ -50,8 +50,9 @@ export default function CadastrarVantagem() {
           name: nome,
           description: descricao,
           cost: custo,
-          amount: quantidade,
-          picture: "test"
+          quantity: quantidade,
+          picture: "test",
+          isActive: true
         }),
       });
 
