@@ -138,7 +138,7 @@ export default function StudentDashboard() {
                 <PiggyBank size={38} />
               </div>
               <div>
-                <div className="text-4xl font-semibold">{loading ? "..." : student.balance}</div>
+                <div className="text-4xl font-semibold">{loading ? "..." : user?.coins}</div>
                 <div className="text-sm text-gray-500">moedas</div>
               </div>
             </div>
