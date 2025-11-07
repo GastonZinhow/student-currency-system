@@ -31,6 +31,7 @@ export default function TrocarVantagem() {
   const [vantagemSelecionada, setVantagemSelecionada] = useState<any>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [coins, setCoins] = useState<number>(0);
+  const [student, setStudent] = useState<any>(null);
 
   const user = authService.getUser();
   const router = useRouter();
@@ -40,11 +41,25 @@ export default function TrocarVantagem() {
     setOpenDialog(true);
   };
 
+  useEffect(() => {
+    const currentStudent = JSON.parse(localStorage.getItem("user") || "{}");
+
+    if (currentStudent?.login) {
+      fetch("http://localhost:8080/students")
+        .then((res) => res.json())
+        .then((data) => {
+          const comp = data.find((c: any) => c.login === user.login);
+          if (comp) setStudent(comp);
+        })
+        .catch((err) => console.error("Erro ao buscar estudante:", err));
+    }
+  }, []);
+
   const confirmarTroca = async () => {
     try {
-      await api.post(`/exchanges`, {
+      await api.post(`/redemptions/redeem`, {
         advantageId: vantagemSelecionada.id,
-        userId: user.id,
+        studentId: student.id,
       });
 
       // Atualiza moedas localmente
@@ -80,7 +95,8 @@ export default function TrocarVantagem() {
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       <h1 className="text-3xl font-bold mb-2">Trocar Moedas por Vantagem</h1>
       <p className="text-gray-500">
-        Você possui <span className="font-semibold">{coins}</span> moedas. Escolha uma vantagem abaixo!
+        Você possui <span className="font-semibold">{coins}</span> moedas.
+        Escolha uma vantagem abaixo!
       </p>
 
       <motion.div variants={fadeUp}>
@@ -104,10 +120,16 @@ export default function TrocarVantagem() {
             <Card className="hover:shadow-lg transition-shadow">
               <CardHeader className="flex flex-col items-center space-y-2">
                 <div className="p-4 bg-gray-100 rounded-full">
-                  <Gift size={28} className="text-emerald-500" />
+                  <img
+                    src={v.picture}
+                    alt={v.name}
+                    className="w-20 h-20 rounded-full object-cover"
+                  />
                 </div>
                 <CardTitle>{v.name}</CardTitle>
-                <CardDescription className="text-center">{v.description}</CardDescription>
+                <CardDescription className="text-center">
+                  {v.description}
+                </CardDescription>
               </CardHeader>
 
               <CardContent className="flex justify-between items-center mt-2">

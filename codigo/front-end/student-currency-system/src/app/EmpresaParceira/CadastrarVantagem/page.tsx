@@ -15,6 +15,7 @@ export default function CadastrarVantagem() {
   const [descricao, setDescricao] = useState("");
   const [custo, setCusto] = useState<number | undefined>(undefined);
   const [quantidade, setQuantidade] = useState<number | undefined>(undefined);
+  const [foto, setFoto] = useState("")
 
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -51,7 +52,7 @@ export default function CadastrarVantagem() {
           description: descricao,
           cost: custo,
           quantity: quantidade,
-          picture: "test",
+          picture: foto,
           isActive: true
         }),
       });
@@ -99,6 +100,11 @@ export default function CadastrarVantagem() {
           <div>
             <Label>Quantidade disponível</Label>
             <Input type="number" value={quantidade} onChange={(e) => setQuantidade(Number(e.target.value))} />
+          </div>
+
+          <div>
+            <Label>URL DA IMAGEM</Label>
+            <Input type="text" value={foto} onChange={(e) => setFoto(e.target.value)} />
           </div>
 
           <div className="flex justify-end gap-3 mt-4">
