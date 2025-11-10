@@ -20,10 +20,10 @@ export default function PartnerDashboard() {
   const user = authService.getUser();
   const router = useRouter();
   
-    const handleLogout = () => {
-      authService.logout();
-      router.push("/auth/login");
-    };
+  const handleLogout = () => {
+    authService.logout();
+    router.push("/auth/login");
+  };
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");

@@ -19,8 +19,8 @@ import {
 } from "@/components/ui/dialog";
 import { Toast } from "@/components/ui/toast";
 import { motion } from "framer-motion";
-import { Gift, Coins } from "lucide-react";
-import { api } from "@/services/api";
+import { Coins } from "lucide-react";
+import api from "@/services/api";
 import { authService } from "@/services/authService";
 import { fadeUp } from "@/components/motionVariants";
 import { useRouter } from "next/navigation";
@@ -31,7 +31,7 @@ export default function TrocarVantagem() {
   const [vantagemSelecionada, setVantagemSelecionada] = useState<any>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [coins, setCoins] = useState<number>(0);
-  const [student, setStudent] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
   const user = authService.getUser();
   const router = useRouter();
@@ -41,39 +41,39 @@ export default function TrocarVantagem() {
     setOpenDialog(true);
   };
 
-  useEffect(() => {
-    const currentStudent = JSON.parse(localStorage.getItem("user") || "{}");
-
-    if (currentStudent?.login) {
-      fetch("http://localhost:8080/students")
-        .then((res) => res.json())
-        .then((data) => {
-          const comp = data.find((c: any) => c.login === user.login);
-          if (comp) setStudent(comp);
-        })
-        .catch((err) => console.error("Erro ao buscar estudante:", err));
-    }
-  }, []);
-
   const confirmarTroca = async () => {
+    if (!user?.userId) return;
+    
+    setLoading(true);
     try {
       await api.post(`/redemptions/redeem`, {
         advantageId: vantagemSelecionada.id,
-        studentId: student.id,
+        studentId: user.userId,
       });
 
-      // Atualiza moedas localmente
-      setCoins((prev) => prev - vantagemSelecionada.cost);
+      const { data: updatedStudent } = await api.get(`/students/${user.userId}`);
+
+      const currentUser = authService.getUser();
+      const updatedUser = {
+        ...currentUser,
+        coins: updatedStudent.coins
+      };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      setCoins(updatedStudent.coins);
 
       setToastMessage("🎉 Troca realizada com sucesso!");
       setOpenDialog(false);
-      setVantagemSelecionada(null);
 
-      setTimeout(() => setToastMessage(null), 3000);
+      setTimeout(() => {
+        router.push("/Aluno/Dashboard");
+      }, 1500);
+
     } catch (error) {
       console.error(error);
       setToastMessage("❌ Erro ao realizar troca");
-      setTimeout(() => setToastMessage(null), 3000);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -87,9 +87,14 @@ export default function TrocarVantagem() {
   };
 
   useEffect(() => {
-    fetchVantagens();
-    setCoins(user.coins || 0);
-  }, []);
+    if (user?.userId) {
+      fetchVantagens();
+      
+      api.get(`/students/${user.userId}`)
+        .then(({ data }) => setCoins(data.coins))
+        .catch(err => console.error("Erro ao buscar moedas:", err));
+    }
+  }, [user?.userId]);
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
@@ -139,7 +144,7 @@ export default function TrocarVantagem() {
                 </div>
                 <Button
                   onClick={() => handleTrocar(v)}
-                  disabled={v.cost > coins} // desabilita se não houver moedas suficientes
+                  disabled={v.cost > coins}
                   className="bg-blue-500 hover:bg-blue-600 text-white transition-transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Trocar
@@ -163,9 +168,10 @@ export default function TrocarVantagem() {
           <DialogFooter>
             <Button
               onClick={confirmarTroca}
+              disabled={loading}
               className="bg-emerald-500 hover:bg-emerald-600"
             >
-              Confirmar troca
+              {loading ? "Processando..." : "Confirmar troca"}
             </Button>
           </DialogFooter>
         </DialogContent>

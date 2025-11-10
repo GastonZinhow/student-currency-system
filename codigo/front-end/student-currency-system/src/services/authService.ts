@@ -6,6 +6,7 @@ export const authService = {
 
     localStorage.setItem("user", JSON.stringify(data));
     localStorage.setItem("role", data.role);
+    localStorage.setItem("userId", data.userId);
     localStorage.setItem("login", data.login);
 
     return data;
@@ -24,6 +25,7 @@ export const authService = {
   logout: () => {
     localStorage.removeItem("user");
     localStorage.removeItem("role");
+    localStorage.removeItem("id");
     localStorage.removeItem("login");
   },
 
@@ -32,6 +34,21 @@ export const authService = {
     const user = localStorage.getItem("user");
     return user ? JSON.parse(user) : null;
   },
+
+  updateUser: (updatedUser: any) => {
+    if (!updatedUser) return;
+
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+
+    if (updatedUser.role) {
+      localStorage.setItem("role", updatedUser.role);
+    }
+    if (updatedUser.login) {
+      localStorage.setItem("login", updatedUser.login);
+    }
+
+    return updatedUser;
+    },
 
   getRole: () => {
     if (typeof window === "undefined") return null;

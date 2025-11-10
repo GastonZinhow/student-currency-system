@@ -9,31 +9,48 @@ import { Coins, List, Bell, Gift, PiggyBank, LogOut } from "lucide-react";
 import { format } from "date-fns";
 import { authService } from "@/services/authService";
 import { useRouter } from "next/navigation";
-
-// Simulação de transações e notificações
-const mockTransactions = [
-  { id: 1, description: "Recebido do Prof. Carlos", amount: 20, date: "2025-10-10T14:00", type: "GAIN" },
-  { id: 2, description: "Troca por Caneca", amount: 15, date: "2025-10-12T09:45", type: "SPEND" },
-  { id: 3, description: "Ganho participação em aula", amount: 10, date: "2025-10-13T17:15", type: "GAIN" },
-];
+import api from "@/services/api";
+import { StudentDTO } from "@/utils/studentData";
+import { TransactionDTO } from "@/utils/transactionData";
+import { RedemptionDTO } from "@/utils/redemptionData";
 
 const mockNotifications = [
-  { id: 1, message: "Você recebeu 20 moedas do Prof. Carlos!", date: "2025-10-10T14:00" },
-  { id: 2, message: "Sua troca por 'Caneca personalizada' foi confirmada.", date: "2025-10-12T09:45" },
-  { id: 3, message: "Você ganhou 10 moedas por participação em aula.", date: "2025-10-13T17:15" },
+  {
+    id: 1,
+    message: "Você recebeu 20 moedas do Prof. Carlos!",
+    date: "2025-10-10T14:00",
+  },
+  {
+    id: 2,
+    message: "Sua troca por 'Caneca personalizada' foi confirmada.",
+    date: "2025-10-12T09:45",
+  },
+  {
+    id: 3,
+    message: "Você ganhou 10 moedas por participação em aula.",
+    date: "2025-10-13T17:15",
+  },
 ];
 
 export default function StudentDashboard() {
-  const [student, setStudent] = useState({
+  const [student, setStudent] = useState<StudentDTO>({
+    id: 0,
     name: "",
-    balance: 0,
-    summary: { last7DaysGained: 0, exchanges: 0 },
-    transactions: [] as any[],
-    notifications: [] as any[],
+    email: "",
+    cpf: "",
+    rg: "",
+    address: "",
+    course: "",
+    coins: 0,
+    instituition: { id: 0, name: "" },
   });
 
+  const [transactions, setTransactions] = useState<TransactionDTO[]>([]);
+  const [redemptions, setRedemptions] = useState<RedemptionDTO[]>([]);
+  const [summary, setSummary] = useState({ last7DaysGained: 0, exchanges: 0 });
   const [loading, setLoading] = useState(true);
   const [showNotifications, setShowNotifications] = useState(false);
+
   const router = useRouter();
   const user = authService.getUser();
 
@@ -42,23 +59,58 @@ export default function StudentDashboard() {
     router.push("/auth/login");
   };
 
-  useEffect(() => {
-    // Gambiarra: simular carregamento do aluno logado
-    setTimeout(() => {
-      const balance = mockTransactions.reduce((acc, t) => t.type === "GAIN" ? acc + t.amount : acc - t.amount, 0);
-      const last7Days = mockTransactions.filter(t => t.type === "GAIN").reduce((acc, t) => acc + t.amount, 0);
-      const exchanges = mockTransactions.filter(t => t.type === "SPEND").length;
+  const fetchStudentData = async () => {
+    if (!user?.userId) return;
 
-      setStudent({
-        name: user?.login ?? "Aluno",
-        balance,
-        summary: { last7DaysGained: last7Days, exchanges },
-        transactions: mockTransactions,
-        notifications: mockNotifications,
-      });
+    setLoading(true);
+    try {
+      const { data: studentData } = await api.get<StudentDTO>(
+        `/students/${user.userId}`
+      );
+
+      const { data: transactionsData } = await api.get<TransactionDTO[]>(
+        `/transactions/student/${user.userId}`
+      );
+
+      const { data: redemptionsData } = await api.get<RedemptionDTO[]>(
+        `/redemptions/student/${user.userId}`
+      );
+
+      const now = new Date();
+      const last7DaysGained = transactionsData
+        .filter(
+          (t) =>
+            new Date(t.createdAt) >=
+            new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+        )
+        .reduce((acc, t) => acc + t.amount, 0);
+
+      const exchanges = redemptionsData.length;
+
+      setStudent(studentData);
+      setTransactions(transactionsData);
+      setRedemptions(redemptionsData);
+      setSummary({ last7DaysGained, exchanges });
+    } catch (error) {
+      console.error("Erro ao buscar dados do aluno:", error);
+    } finally {
       setLoading(false);
-    }, 300);
-  }, [user]);
+    }
+  };
+
+  useEffect(() => {
+    fetchStudentData();
+
+    const handleFocus = () => {
+      fetchStudentData();
+    };
+
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [user?.userId]);
 
   return (
     <motion.div
@@ -68,24 +120,31 @@ export default function StudentDashboard() {
       className="space-y-6 p-6 max-w-6xl mx-auto relative"
     >
       {/* Cabeçalho */}
-      <motion.header variants={fadeUp} className="flex items-center justify-between relative">
+      <motion.header
+        variants={fadeUp}
+        className="flex items-center justify-between relative"
+      >
         <div>
-          <h1 className="text-3xl font-bold">Olá, {loading ? "..." : student.name}</h1>
-          <p className="text-sm text-gray-500">Bem-vindo ao seu painel de moedas</p>
+          <h1 className="text-3xl font-bold">
+            Olá, {loading ? "..." : student.name}
+          </h1>
+          <p className="text-sm text-gray-500">
+            Bem-vindo ao seu painel de moedas
+          </p>
         </div>
 
         <div className="flex items-center gap-4 relative">
           {/* Notificações */}
           <div className="relative">
             <button
-              onClick={() => setShowNotifications(prev => !prev)}
+              onClick={() => setShowNotifications((prev) => !prev)}
               aria-label="Ver notificações"
               className="relative p-2 rounded-full hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-blue-200"
             >
               <Bell size={22} />
-              {student.notifications.length > 0 && (
+              {mockNotifications.length > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                  {student.notifications.length}
+                  {mockNotifications.length}
                 </span>
               )}
             </button>
@@ -99,11 +158,11 @@ export default function StudentDashboard() {
               >
                 <div className="p-3 border-b font-semibold">Notificações</div>
                 <div className="max-h-60 overflow-y-auto divide-y">
-                  {student.notifications.map(n => (
+                  {mockNotifications.map((n) => (
                     <div key={n.id} className="p-3 text-sm hover:bg-gray-50">
                       <div>{n.message}</div>
                       <div className="text-xs text-gray-500 mt-1">
-                        {format(new Date(n.date), "dd/MM/yyyy HH:mm")}
+                        {n.date && format(new Date(n.date), "dd/MM/yyyy HH:mm")}
                       </div>
                     </div>
                   ))}
@@ -130,15 +189,23 @@ export default function StudentDashboard() {
       </motion.header>
 
       {/* Cards principais */}
-      <motion.section variants={fadeUp} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <CommonCard title="Saldo de Moedas" subtitle="Valor disponível para trocas">
+      <motion.section
+        variants={fadeUp}
+        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+      >
+        <CommonCard
+          title="Saldo de Moedas"
+          subtitle="Valor disponível para trocas"
+        >
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-3">
               <div className="p-4 rounded-xl bg-gray-100">
                 <PiggyBank size={38} />
               </div>
               <div>
-                <div className="text-4xl font-semibold">{loading ? "..." : user?.coins}</div>
+                <div className="text-4xl font-semibold">
+                  {loading ? "..." : student.coins}
+                </div>
                 <div className="text-sm text-gray-500">moedas</div>
               </div>
             </div>
@@ -157,12 +224,18 @@ export default function StudentDashboard() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-500">Ganho últimos 7 dias</div>
-                <div className="font-semibold">{loading ? "..." : student.summary.last7DaysGained} moedas</div>
+                <div className="text-sm text-gray-500">
+                  Ganho últimos 7 dias
+                </div>
+                <div className="font-semibold">
+                  {loading ? "..." : summary.last7DaysGained} moedas
+                </div>
               </div>
               <div>
                 <div className="text-sm text-gray-500">Total de trocas</div>
-                <div className="font-semibold">{loading ? "..." : student.summary.exchanges}</div>
+                <div className="font-semibold">
+                  {loading ? "..." : redemptions?.length}
+                </div>
               </div>
             </div>
             <div className="mt-2 bg-gray-50 p-3 rounded-lg">
@@ -172,7 +245,10 @@ export default function StudentDashboard() {
                   style={{
                     width: loading
                       ? "0%"
-                      : `${Math.min(100, (student.summary.last7DaysGained / 150) * 100)}%`,
+                      : `${Math.min(
+                          100,
+                          (summary.last7DaysGained / 150) * 100
+                        )}%`,
                   }}
                 />
               </div>
@@ -182,34 +258,78 @@ export default function StudentDashboard() {
       </motion.section>
 
       {/* Transações recentes */}
-      <motion.section variants={fadeUp}>
-        <CommonCard title="Transações recentes" actions={<div className="text-sm text-gray-500">Últimas 8</div>}>
-          <div className="mt-3 space-y-2">
-            {loading ? (
-              <div className="text-sm text-gray-500">Carregando...</div>
-            ) : (
-              student.transactions.slice(0, 6).map((t: any) => (
-                <div key={t.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-md bg-gray-100">
-                      <List size={18} />
-                    </div>
-                    <div>
-                      <div className="font-medium">{t.description}</div>
-                      <div className="text-xs text-gray-500">
-                        {format(new Date(t.date), "dd/MM/yyyy HH:mm")}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <motion.section variants={fadeUp}>
+          <CommonCard
+            title="Transações recentes"
+            actions={<div className="text-sm text-gray-500">Últimas 8</div>}
+          >
+            <div className="mt-3 space-y-2">
+              {loading ? (
+                <div className="text-sm text-gray-500">Carregando...</div>
+              ) : (
+                transactions.slice(0, 6).map((t: TransactionDTO) => (
+                  <div
+                    key={t.id}
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-md bg-gray-100">
+                        <List size={18} />
+                      </div>
+                      <div>
+                        <div className="font-medium">{t.reason}</div>
+                        <div className="text-xs text-gray-500">
+                          {format(new Date(t.createdAt), "dd/MM/yyyy HH:mm")}
+                        </div>
                       </div>
                     </div>
+                    <div className="font-semibold text-emerald-600">
+                      +{t.amount}
+                    </div>
                   </div>
-                  <div className={`font-semibold ${t.type === "GAIN" ? "text-emerald-600" : "text-rose-500"}`}>
-                    {t.type === "GAIN" ? `+${t.amount}` : `-${t.amount}`}
+                ))
+              )}
+            </div>
+          </CommonCard>
+        </motion.section>
+        {/* Resgates recentes */}
+        <motion.section variants={fadeUp}>
+          <CommonCard
+            title="Resgates recentes"
+            actions={<div className="text-sm text-gray-500">Últimos 4</div>}
+          >
+            <div className="mt-3 space-y-2">
+              {loading ? (
+                <div className="text-sm text-gray-500">Carregando...</div>
+              ) : (
+                redemptions.slice(0, 4).map((r: RedemptionDTO) => (
+                  <div
+                    key={r.id}
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-md bg-red-100">
+                        <List size={18} />
+                      </div>
+                      <div>
+                        <div className="font-medium">{r.advantage.name}</div>
+                        <div className="text-xs text-gray-500">
+                          {r.createdAt &&
+                            format(new Date(r.createdAt), "dd/MM/yyyy HH:mm")}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="font-semibold text-red-600">
+                      -{r.advantage.cost}
+                    </div>
                   </div>
-                </div>
-              ))
-            )}
-          </div>
-        </CommonCard>
-      </motion.section>
+                ))
+              )}
+            </div>
+          </CommonCard>
+        </motion.section>
+      </div>
     </motion.div>
   );
 }
