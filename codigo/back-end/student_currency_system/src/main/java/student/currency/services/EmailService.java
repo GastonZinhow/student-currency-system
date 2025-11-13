@@ -13,10 +13,10 @@ public class EmailService {
     @Value("${sendgrid.api.key}")
     private String sendGridApiKey;
 
-    public void sendEmail(String to, String subject, String content) {
+    public void sendEmail(String to, String subject, String htmlContent) {
         Email from = new Email("academicamoeda@gmail.com");
         Email toEmail = new Email(to);
-        Content emailContent = new Content("text/plain", content);
+        Content emailContent = new Content("text/html", htmlContent);
         Mail mail = new Mail(from, subject, toEmail, emailContent);
 
         SendGrid sg = new SendGrid(sendGridApiKey);
