@@ -44,7 +44,6 @@ export default function LoginPage() {
   return (
     <div className="flex h-screen bg-neutral-900 text-white">
 
-      {/* LEFT IMAGE AREA */}
       <div className="hidden lg:flex w-1/2 items-center justify-center bg-neutral-950 relative">
         <img
           src="https://img.freepik.com/vetores-premium/bitcoin-em-estilo-pixel-art_735839-2149.jpg"
@@ -52,22 +51,19 @@ export default function LoginPage() {
           className="w-full h-full object-cover opacity-60"
         />
 
-        {/* LOGO EM CIMA DA IMAGEM */}
         <div className="absolute top-10 left-10 flex items-center gap-3">
-          <h1 className="text-3xl font-bold">Academic Moeda</h1>
+          <h1 className="text-4xl font-bold">Academic Coin</h1>
           <Bitcoin size={40} className="text-yellow-400" />
         </div>
 
-        {/* TEXTO ESTILO LANDING */}
-        <div className="absolute bottom-20 left-10 max-w-lg">
-          <h2 className="text-4xl font-bold mb-4 text-shadow-lg">Transforme suas Conquistas em Recompensas</h2>
-          <p className=" text-lg text-shadow-lg">
+        <div className="absolute bottom-5 left-10 max-w-lg">
+          <h3 className="text-3xl font-bold mb-4 text-shadow-lg/30 text-shadow-black">Transforme suas Conquistas em Recompensas</h3>
+          <p className=" text-lg text-shadow-lg/30 text-shadow-black">
             Ganhe moedas acadêmicas, resgate vantagens e conquiste reconhecimento.
           </p>
         </div>
       </div>
 
-      {/* RIGHT LOGIN CARD */}
       <div className="flex w-full lg:w-1/2 items-center justify-center">
         <div className="w-full max-w-sm rounded-2xl bg-neutral-800 p-8 shadow-2xl">
 
