@@ -80,7 +80,6 @@ public class RedemptionService {
                                         <p>Seu novo saldo é: <b>%d moedas</b>.</p>
                                         <br>
                                         <img src="%s" alt="Logo" width="200" style="margin-top: 10px;">
-                                        <p>IMAGEM: %s</p>
 
                                         <br><br>
                                         <small>Equipe Academic Moeda</small>
@@ -94,7 +93,6 @@ public class RedemptionService {
                                                 escapePercent(advantage.getDescription()),
                                                 escapePercent(code),
                                                 student.getCoins(),
-                                                escapePercent(advantage.getPicture()),
                                                 escapePercent(advantage.getPicture()));
 
                 emailService.sendEmail(
@@ -114,7 +112,6 @@ public class RedemptionService {
                                         <p><b>Código do cupom:</b> %s</p>
                                         <br>
                                         <img src="%s" alt="Logo" width="200" style="margin-top: 10px;">
-                                        <p>IMAGEM: %s</p>
 
                                         <br><br>
                                         <small>Equipe Academic Moeda</small>
@@ -128,7 +125,6 @@ public class RedemptionService {
                                                 escapePercent(student.getName()),
                                                 escapePercent(advantage.getDescription()),
                                                 escapePercent(code),
-                                                escapePercent(advantage.getPicture()),
                                                 escapePercent(advantage.getPicture()));
 
                 emailService.sendEmail(advantage.getCompany().getEmail(), "Sua vantagem foi resgatada!", htmlCompany);
