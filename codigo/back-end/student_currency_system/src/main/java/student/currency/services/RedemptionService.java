@@ -69,35 +69,76 @@ public class RedemptionService {
                 Redemption savedRedemption = redemptionRepository.save(redemption);
 
                 String html = """
-                                    <html>
-                                      <body style="font-family: Arial, sans-serif; color: #333;">
+                                <html>
+                                  <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f2f2f2;">
+                                    <div style="max-width: 600px; margin: 0 auto; background: #ffffff;">
+                                      <div style="width: 600px; height: 80px; background-color: #000;"></div>
+                                      <div style="padding: 20px; text-align: center; color: #333;">
                                         <h2>Olá, %s!</h2>
                                         <p>Você resgatou a vantagem: <strong>%s</strong></p>
                                         <p><b>Código do cupom:</b> %s</p>
                                         <p>Seu novo saldo é: <b>%d moedas</b>.</p>
                                         <br>
-                                        <img src="%s"
-                                             alt="Logo" width="200">
-                                        <p> IMAGEM: %s </p>
+                                        <img src="%s" alt="Logo" width="200" style="margin-top: 10px;">
+                                        <p>IMAGEM: %s</p>
+
                                         <br><br>
                                         <small>Equipe Academic Moeda</small>
-                                      </body>
-                                    </html>
-                                """.formatted(student.getName(), advantage.getDescription(), code, student.getCoins(), advantage.getPicture(), advantage.getPicture());
+                                      </div>
+                                      <div style="width: 600px; height: 60px; background-color: #000;"></div>
+                                    </div>
+                                  </body>
+                                </html>"""
+                                .formatted(
+                                                escapePercent(student.getName()),
+                                                escapePercent(advantage.getDescription()),
+                                                escapePercent(code),
+                                                student.getCoins(),
+                                                escapePercent(advantage.getPicture()),
+                                                escapePercent(advantage.getPicture()));
 
                 emailService.sendEmail(
                                 student.getEmail(),
                                 "Cupom de resgate de vantagem",
                                 html);
 
-                emailService.sendEmail(
-                                advantage.getCompany().getEmail(),
-                                "Novo resgate de vantagem",
-                                "O aluno " + student.getName() + " (" + student.getEmail() + ") " +
-                                                "resgatou a vantagem '" + advantage.getDescription() + "'.\n" +
-                                                "Código do cupom: " + code + "\n" +
-                                                "Verifique o código para liberar o benefício.");
+                String htmlCompany = """
+                                <html>
+                                  <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f2f2f2;">
+                                    <div style="max-width: 600px; margin: 0 auto; background: #ffffff;">
+                                      <div style="width: 600px; height: 80px; background-color: #000;"></div>
+                                      <div style="padding: 20px; text-align: center; color: #333;">
+                                        <h2>Olá, %s!</h2>
+                                        <p>O aluno: <strong>%s</strong></p>
+                                        <p>Resgatou a vantagem: <strong>%s</strong></p>
+                                        <p><b>Código do cupom:</b> %s</p>
+                                        <br>
+                                        <img src="%s" alt="Logo" width="200" style="margin-top: 10px;">
+                                        <p>IMAGEM: %s</p>
+
+                                        <br><br>
+                                        <small>Equipe Academic Moeda</small>
+                                      </div>
+                                      <div style="width: 600px; height: 60px; background-color: #000;"></div>
+                                    </div>
+                                  </body>
+                                </html>"""
+                                .formatted(
+                                                escapePercent(advantage.getCompany().getName()),
+                                                escapePercent(student.getName()),
+                                                escapePercent(advantage.getDescription()),
+                                                escapePercent(code),
+                                                escapePercent(advantage.getPicture()),
+                                                escapePercent(advantage.getPicture()));
+
+                emailService.sendEmail(advantage.getCompany().getEmail(), "Sua vantagem foi resgatada!", htmlCompany);
 
                 return redemptionMapper.toResponseDTO(savedRedemption);
+        }
+
+        private static String escapePercent(String value) {
+                if (value == null)
+                        return "";
+                return value.replace("%", "%%");
         }
 }
