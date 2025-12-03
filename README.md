@@ -4,7 +4,7 @@
 # 🏷️ Student Currency System 👨‍💻
 
 > [!NOTE]
-> Breve descrição do projeto. **Sistema completo para reconhecimento do mérito estudantil via moeda virtual, distribuída por professores e trocada pelos alunos por vantagens em empresas parceiras.**  
+> **Sistema completo para reconhecimento do mérito estudantil via moeda virtual, distribuída por professores e trocada pelos alunos por vantagens em empresas parceiras.**  
 
 ---
 
@@ -80,11 +80,21 @@ Estruturado seguindo boas práticas de MVC e divisão em camadas:
 
 Para melhor visualização e entendimento da estrutura do sistema, os diagramas principais estão organizados lado a lado.
 
-| **Diagrama de Classes** | **Diagrama de Componentes** |
-| <img src="https://raw.githubusercontent.com/MirellyAlvarenga/student-currency-system/main/docs/Diagrama%20de%20Classes.jpg" alt="Diagrama de Classes" width="250px"> | <img src="https://raw.githubusercontent.com/MirellyAlvarenga/student-currency-system/main/docs/Component%20Diagram%20Currency%20System.jpg" alt="Diagrama de Componentes" width="250px"> |
+**Diagrama de Classes**
 
-| **Modelo de Dados (DER)** | **Casos de Uso** |
-| <img src="https://raw.githubusercontent.com/MirellyAlvarenga/student-currency-system/main/docs/DER%20Sistema%20De%20Moeda.png" alt="Diagrama Entidade Relacionamento" width="250px"> | <img src="https://raw.githubusercontent.com/MirellyAlvarenga/student-currency-system/main/docs/Diagrama%20de%20casos%20de%20uso.jpg" alt="Diagrama de Casos de Uso" width="250px"> |
+<img src="https://raw.githubusercontent.com/MirellyAlvarenga/student-currency-system/main/docs/Diagrama%20de%20Classes.jpg" alt="Diagrama de Classes" width="250px">
+
+**Diagrama de Componentes**
+
+<img src="https://raw.githubusercontent.com/MirellyAlvarenga/student-currency-system/main/docs/Component%20Diagram%20Currency%20System.jpg" alt="Diagrama de Componentes" width="250px">
+
+**Modelo de Dados (DER)**
+
+<img src="https://raw.githubusercontent.com/MirellyAlvarenga/student-currency-system/main/docs/DER%20Sistema%20De%20Moeda.png" alt="Diagrama Entidade Relacionamento" width="250px">
+
+**Casos de Uso**
+
+<img src="https://raw.githubusercontent.com/MirellyAlvarenga/student-currency-system/main/docs/Diagrama%20de%20casos%20de%20uso.jpg" alt="Diagrama de Casos de Uso" width="250px">
 
 ---
 
