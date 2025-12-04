@@ -5,7 +5,7 @@
 
 > [!NOTE]
 > **Sistema completo para reconhecimento do mérito estudantil via moeda virtual, distribuída por professores e trocada pelos alunos por vantagens em empresas parceiras.**  
-
+SITE: https://student-currency-system-production.up.railway.app
 ---
 
 ## 📚 Índice
