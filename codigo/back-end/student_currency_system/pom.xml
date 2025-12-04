@@ -22,7 +22,7 @@
 	</licenses>
 
 	<properties>
-		<java.version>21</java.version>
+		<java.version>17</java.version>
 		<java-jwt.version>4.4.0</java-jwt.version>
 		<mysql-connector.version>8.0.33</mysql-connector.version>
 	</properties>
